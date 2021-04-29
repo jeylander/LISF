@@ -283,7 +283,7 @@ subroutine LIS_DAobs_plugin
 #endif
 
 #if ( defined DA_OBS_ISCCP_HXG )
-    use ISCCP_HXG_Mod,          only : ISCCP_HXG_setup  
+    use ISCCP_HXG_Mod,          only : ISCCP_HXG_setup
 #endif
 
 #if ( defined DA_OBS_SYNTHETICSM )
@@ -422,6 +422,10 @@ subroutine LIS_DAobs_plugin
 
 #if ( defined DA_OBS_NASA_SMAPVOD)
     external read_NASASMAPvod, write_NASASMAPvodobs
+#endif
+
+#if ( defined DA_OBS_ISCCP_HXG )
+    external read_ISCCP_HXG, write_ISCCP_HXG_obs
 #endif
 
 #if ( defined DA_OBS_GLASS_LAI)
@@ -863,11 +867,11 @@ subroutine LIS_DAobs_plugin
 #endif
 #if ( defined DA_OBS_ISCCP_HXG )
    call registerdaobssetup(trim(LIS_ISCCPstobsId)//char(0),&
-        ISCCPHXGst_setup)
+        ISCCP_HXG_setup)
    call registerreaddaobs(trim(LIS_ISCCPstobsId)//char(0),&
-        read_ISCCPHXGst)
+        read_ISCCP_HXG)
    call registerwritedaobs(trim(LIS_ISCCPstobsId)//char(0),&
-        write_ISCCPHXGstobs)
+        write_ISCCP_HXG_obs)
 #endif
 #endif
 
