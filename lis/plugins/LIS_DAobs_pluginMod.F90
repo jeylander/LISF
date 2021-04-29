@@ -857,6 +857,14 @@ subroutine LIS_DAobs_plugin
    call registerwritedaobs(trim(LIS_ASOsweobsId)//char(0),&
         write_ASO_SWEobs)
 #endif
+#if ( defined DA_OBS_ISCCP_HXG )
+   call registerdaobssetup(trim(LIS_ISCCPstobsId)//char(0),&
+        ISCCPHXGst_setup)
+   call registerreaddaobs(trim(LIS_ISCCPstobsId)//char(0),&
+        read_ISCCPHXGst)
+   call registerwritedaobs(trim(LIS_ISCCPstobsId)//char(0),&
+        write_ISCCPHXGstobs)
+#endif
 #endif
 
  end subroutine LIS_DAobs_plugin

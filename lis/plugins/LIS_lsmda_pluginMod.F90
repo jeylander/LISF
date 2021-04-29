@@ -2552,6 +2552,28 @@ subroutine LIS_lsmda_plugin
    call registerlsmdadescalestatevar(trim(LIS_noahmp401Id)//"+"//&
         trim(LIS_MCD15A2HlaiobsId)//char(0),noahmp401_descale_veg)
 
+! John Eylander, SkinTemp DA
+#if ( defined DA_OBS_TSKIN)
+   call registerlsmdainit(trim(LIS_noahmp401Id)//"+"//&
+       trim(LIS_ISCCPstobsId )//char(0),NoahMP401_dasoiltemp_init)
+   call registerlsmdagetstatevar(trim(LIS_noahmp401Id)//"+"//&
+       trim(LIS_ISCCPstobsId )//char(0),NoahMP401_getsoiltemp)
+   call registerlsmdasetstatevar(trim(LIS_noahmp401Id)//"+"//&
+       trim(LIS_ISCCPstobsId )//char(0),NoahMP401_setsoiltemp)
+   call registerlsmdagetobspred(trim(LIS_noahmp401Id)//"+"//&
+       trim(LIS_ISCCPstobsId )//char(0),NoahMP401_getstopred)
+   call registerlsmdaqcstate(trim(LIS_noahmp401Id)//"+"//&
+       trim(LIS_ISCCPstobsId )//char(0),NoahMP401_qcsoiltemp)
+   call registerlsmdaqcobsstate(trim(LIS_noahmp401Id)//"+"//&
+       trim(LIS_ISCCPstobsId )//char(0),NoahMP401_qc_soiltempobs)
+   call registerlsmdascalestatevar(trim(LIS_noahmp401Id)//"+"//&
+       trim(LIS_ISCCPstobsId )//char(0),NoahMP401_scale_soiltemp)
+   call registerlsmdadescalestatevar(trim(LIS_noahmp401Id)//"+"//&
+       trim(LIS_ISCCPstobsId )//char(0),NoahMP401_descale_soiltemp)
+   call registerlsmdaupdatestate(trim(LIS_noahmp401Id)//"+"//&
+       trim(LIS_ISCCPstobsId )//char(0),NoahMP401_updatesoiltemp)
+#endif
+
 ! Yeosang Yoon, SNODEP DA
 #if ( defined DA_OBS_SNODEP )
 ! DA + snodep wirings
