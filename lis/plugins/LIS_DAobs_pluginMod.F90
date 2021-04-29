@@ -282,6 +282,10 @@ subroutine LIS_DAobs_plugin
     use ASO_SWE_Mod,  only : ASO_SWE_setup
 #endif
 
+#if ( defined DA_OBS_ISCCP_HXG )
+    use ISCCP_HXG_Mod,          only : ISCCP_HXG_setup  
+#endif
+
 #if ( defined DA_OBS_SYNTHETICSM )
     external read_syntheticsmobs, write_syntheticsmobs
 #endif
