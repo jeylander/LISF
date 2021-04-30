@@ -866,11 +866,12 @@ subroutine LIS_DAobs_plugin
         write_ASO_SWEobs)
 #endif
 #if ( defined DA_OBS_ISCCP_HXG )
-   call registerdaobssetup(trim(LIS_ISCCPstobsId)//char(0),&
+   call registerdaobsclass(trim(LIS_ISCCP_HXGobsId),"LSM")
+   call registerdaobssetup(trim(LIS_ISCCP_HXGobsId)//char(0),&
         ISCCP_HXG_setup)
-   call registerreaddaobs(trim(LIS_ISCCPstobsId)//char(0),&
+   call registerreaddaobs(trim(LIS_ISCCP_HXGobsId)//char(0),&
         read_ISCCP_HXG)
-   call registerwritedaobs(trim(LIS_ISCCPstobsId)//char(0),&
+   call registerwritedaobs(trim(LIS_ISCCP_HXGobsId)//char(0),&
         write_ISCCP_HXG_obs)
 #endif
 #endif

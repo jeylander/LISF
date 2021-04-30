@@ -294,6 +294,7 @@ module LIS_pluginIndices
         "ASO SWE"
    character*50, public,  parameter :: LIS_synwlId             = &
         "Synthetic water level"
+   character*50, public,  parameter :: LIS_ISCCP_HXGobsId      = "ISCCP skin temp"
 
 !-------------------------------------------------------------------------
 ! Bias Estimation Algorithms

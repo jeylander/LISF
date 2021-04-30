@@ -85,5 +85,5 @@ subroutine NoahMP401_getsoiltemp(n, LSM_State)
      soilt4(t) = noahmp401_struc(n)%noahmp401(t)%tslb(4)
   enddo
 
-end subroutine NoahMP401_getsoilm
+end subroutine NoahMP401_getsoiltemp
 

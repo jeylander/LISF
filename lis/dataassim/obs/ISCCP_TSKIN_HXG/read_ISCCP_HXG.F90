@@ -6,6 +6,7 @@
 ! All Rights Reserved.
 !-------------------------END NOTICE -- DO NOT EDIT-----------------------
 #include "LIS_misc.h"
+#include "LIS_NetCDF_inc.h"
 !BOP
 ! !ROUTINE: read_ISCCP_HXG
 ! \label{read_ISCCP_HXG}
@@ -228,8 +229,8 @@ subroutine read_ISCCP_HXG(n, k, OBS_State, OBS_Pert_State)
              n,k,                               &
              ISCCP_HXG_struc(n)%nbins,         &
              1,                                 &
-             MAX_ST_VALUE,                      &
-             MIN_ST_VALUE,                      &
+             MAX_STO_VALUE,                      &
+             MIN_STO_VALUE,                      &
              ISCCP_HXG_struc(n)%model_xrange,  &
              ISCCP_HXG_struc(n)%obs_xrange,    &
              ISCCP_HXG_struc(n)%model_cdf,     &
@@ -240,8 +241,8 @@ subroutine read_ISCCP_HXG(n, k, OBS_State, OBS_Pert_State)
              n,k,                               & 
              ISCCP_HXG_struc(n)%nbins,         &
              ISCCP_HXG_struc(n)%ntimes,        &
-             MAX_ST_VALUE,                      &
-             MIN_ST_VALUE,                      &
+             MAX_STO_VALUE,                      &
+             MIN_STO_VALUE,                      &
              ISCCP_HXG_struc(n)%model_xrange,  &
              ISCCP_HXG_struc(n)%obs_xrange,    &
              ISCCP_HXG_struc(n)%model_cdf,     &
@@ -277,6 +278,7 @@ subroutine read_ISCCP_HXG(n, k, OBS_State, OBS_Pert_State)
        MPI_LOGICAL, data_upd_flag(:),&
        1, MPI_LOGICAL, LIS_mpi_comm, status)
 #endif
+
   data_upd = .false.
   do p=1,LIS_npes
      data_upd = data_upd.or.data_upd_flag(p)
@@ -378,6 +380,7 @@ subroutine read_ISCCP_HXG_data(n, k, fname, tskin_obs_ip)
   integer                       :: k
   character (len=*)             :: fname
   real                          :: tskin_obs_ip(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k))
+  logical                       :: tskin_array_logical_ip(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k))
 
 
 ! !OUTPUT PARAMETERS:
@@ -402,44 +405,43 @@ subroutine read_ISCCP_HXG_data(n, k, fname, tskin_obs_ip)
 #if (defined USE_NETCDF4)
 
   integer             :: i, j, istat, nid, ios
+  integer             :: ncid, nrid, nc, nr, ncount
   integer             :: tskinid, cloudsid, tmptabid, latid, lonid
 
-  integer(hsize_t), allocatable  :: dims(:)
-  integer(hsize_t), dimension(2) :: dimst
-  integer(hsize_t), dimension(2) :: count_file
-  integer(hsize_t), dimension(2) :: count_mem
-  integer(hid_t)                 :: memspace
-  integer(hid_t)                 :: dataspace
+  integer,          allocatable  :: dims(:)
+  integer,          dimension(2) :: dimst
+  integer,          dimension(2) :: count_file
+  integer,          dimension(2) :: count_mem
+  integer                        :: memspace
+  integer                        :: dataspace
   integer                        :: memrank = 2 ! scaler--> rank = 0 ; 2D array--> rank = 2
-  integer(hsize_t), dimension(2) :: offset_mem = (/0,0/)
-  integer(hsize_t), dimension(2) :: offset_file = (/0,0/)
-  integer(hid_t)                 :: file_id
+  integer,          dimension(2) :: offset_mem = (/0,0/)
+  integer,          dimension(2) :: offset_file = (/0,0/)
+  integer                        :: file_id
 
 
   integer                        :: c,r,t
   integer                        :: bit_temp
   integer                        :: status
+  integer                        :: temp_tab_size
 
   real                           :: assigned_temp
+
+  integer, allocatable            :: ts_temp(:,:)
+  real, allocatable               :: tmp_lat(:)
+  real, allocatable               :: tmp_lon(:)
+  real, allocatable               :: clouds(:,:)
+  real, allocatable               :: temp_array(:,:)
+  real, allocatable               :: tmp_tab(:)
+
+  logical*1    :: tskin_array_logical(ISCCP_HXG_struc(n)%nc*ISCCP_HXG_struc(n)%nr)
+  real         :: tskin_data(ISCCP_HXG_struc(n)%nc*ISCCP_HXG_struc(n)%nr)
 
   dimst      = (/ISCCP_HXG_struc(n)%nc, ISCCP_HXG_struc(n)%nr/)
   count_file = (/ISCCP_HXG_struc(n)%nc, ISCCP_HXG_struc(n)%nr/)
   count_mem  = (/ISCCP_HXG_struc(n)%nc, ISCCP_HXG_struc(n)%nr/)
   
   allocate(dims(2))
-
-  
-  integer, allocatable            :: ts_temp(:,:)
-  real, allocatable               :: tmp_lat(:,:)
-  real, allocatable               :: tmp_lon(:,:)
-  real, allocatable               :: clouds(:,:)
-  real, allocatable               :: temp_array(:,:)
-  real, allocatable               :: tmp_tab
-
-  logical*1    :: tskin_array_logical(ISCCP_HXG_struc(n)%nc*ISCCP_HXG_struc(n)%nr)
-  real         :: tskin_array(ISCCP_HXG_struc(n)%nc*ISCCP_HXG_struc(n)%nr)
-
-  allocate(tskin_array(LIS_rc%lnc(n)*LIS_rc%lnr(n)))
   
   allocate(tmp_lat(LIS_rc%lnc(n)*LIS_rc%lnr(n)))
   allocate(tmp_lon(LIS_rc%lnc(n)*LIS_rc%lnr(n)))
@@ -448,14 +450,12 @@ subroutine read_ISCCP_HXG_data(n, k, fname, tskin_obs_ip)
   dims(1) = ISCCP_HXG_struc(n)%nc
   dims(2) = ISCCP_HXG_struc(n)%nr
 
-#if(defined USE_NETCDF3 || defined USE_NETCDF4)
-
 !-------------------------------------------------------------------------
 !   Open the NETCDF file
 !-------------------------------------------------------------------------
 
-     ios = nf90_open(path=trim(fname),mode=NF90_NOWRITE,ncid=nid)
-     call LIS_VERIFY(ios, 'Error opening file'//trim(fname)
+  ios = nf90_open(path=trim(fname),mode=NF90_NOWRITE,ncid=nid)
+  call LIS_VERIFY(ios, 'Error opening file'//trim(fname))
 
 !-------------------------------------------------------------------------
 !   Obtain the NETCDF variable record ID, then get the variable for TSKIN
@@ -463,62 +463,64 @@ subroutine read_ISCCP_HXG_data(n, k, fname, tskin_obs_ip)
 !   make sure we are only using the TSKIN data
 !-------------------------------------------------------------------------
 
-     ios = nf90_inq_varid(nid, 'IR retrieved cloud top temperature or surface skin temperature', tskinid)
-     call LIS_VERIFY(ios, 'Error nf90_inq_varid: ISCCP skin temperature')
+  call LIS_VERIFY(nf90_inq_varid(ncid=nid, &
+    name='IR retrieved cloud top temperature or surface skin temperature', &
+    varid=tskinid), '[ERR] Error nf90_inq_varid: ISCCP skin temperature')
 
-     ios = nf90_inq_dimid(nid,"lon",ncId)
-     call LIS_verify(ios,'Error in nf90_inq_dimid in ISCCP Skin Temp')
+  call LIS_verify(nf90_inq_dimid(ncid=nid,name='lon',dimid=ncId), &
+    '[ERR] Error in nf90_inq_dimid in ISCCP Skin Temp')
 
-     ios = nf90_inq_dimid(nid,"lat",nrId)
-     call LIS_verify(ios,'Error in nf90_inq_dimid in ISCCP Skin Temp')
+  call LIS_verify(nf90_inq_dimid(ncid=nid,name='lat',dimid=nrId), &
+    '[ERR] Error in nf90_inq_dimid in ISCCP Skin Temp')
 
-     ios = nf90_inquire_dimension(nid,ncId, len=nc)
-     call LIS_verify(ios,'Error in nf90_inquire_dimension in ISCCP Skin Temp')
+  call LIS_verify(nf90_inquire_dimension(ncid=nid,dimid=ncId, len=nc), &
+    '[ERR] Error in nf90_inquire_dimension in ISCCP Skin Temp')
 
-     ios = nf90_inquire_dimension(nid,nrId, len=nr)
-     call LIS_verify(ios,'Error in nf90_inquire_dimension in ISCCP Skin Temp')
+  call LIS_verify(nf90_inquire_dimension(ncid=nid,dimid=nrId, len=nr), &
+    '[ERR] Error in nf90_inquire_dimension in ISCCP Skin Temp')
 
-     ISCCP_HXG_struc(n)%nc = nc
-     ISCCP_HXG_struc(n)%nr = nr
+  ISCCP_HXG_struc(n)%nc = nc
+  ISCCP_HXG_struc(n)%nr = nr
 
-     allocate(ts_temp(ISCCP_HXG_struc(n)%nc, ISCCP_HXG_struc(n)%nr))
-     allocate(clouds(ISCCP_HXG_struc(n)%nc, ISCCP_HXG_struc(n)%nr))
-     allocatable(temp_array(ISCCP_HXG_struc(n)%nc, ISCCP_HXG_struc(n)%nr))
+  allocate(ts_temp(ISCCP_HXG_struc(n)%nc, ISCCP_HXG_struc(n)%nr))
+  allocate(clouds(ISCCP_HXG_struc(n)%nc, ISCCP_HXG_struc(n)%nr))
+  allocate(temp_array(ISCCP_HXG_struc(n)%nc, ISCCP_HXG_struc(n)%nr))
 
-     ios = nf90_get_var(nid, tskinid, ts_temp)
-     call LIS_VERIFY(ios, 'Error nf90_get_var: ISCCP Surface Skin Temperature')
+  call LIS_VERIFY(nf90_get_var(ncid=nid, varid=tskinid, values=ts_temp), &
+        '[ERR] Error nf90_get_var: ISCCP Surface Skin Temperature')
 
 !-------------------------------------------------------------------------
 !   read in the cloud mask as a filter
 !-------------------------------------------------------------------------
 
-     ios = nf90_inq_varid(nid, 'Cloud mask', cloudsid)
-     call LIS_VERIFY(ios, 'Error nf90_inq_varid: ISCCP Cloud Mask')
+  call LIS_VERIFY(nf90_inq_varid(ncid=nid, name='Cloud mask', &
+    varid=cloudsid), '[ERR] Error nf90_inq_varid: ISCCP Cloud Mask')
 
-     ios = nf90_get_var(nid, cloudsid, clouds)
-     call LIS_VERIFY(ios, 'Error nf90_get_var: ISCCP Cloud mask')
+  call LIS_VERIFY(nf90_get_var(ncid=nid, varid=cloudsid, &
+    values=clouds), '[ERR] Error nf90_get_var: ISCCP Cloud mask')
 
 !-------------------------------------------------------------------------
 !   read in the conversion table to convert the byte data from the ISCCP
 ! temperature record into a floating point actual temperature value
 !-------------------------------------------------------------------------
 
-     ios = nf90_inq_dimid(nid,"count",ncount)
-     call LIS_verify(ios,'Error in nf90_inq_dimid obtaining temp counts in ISCCP Skin Temp')
+  call LIS_verify(nf90_inq_dimid(ncid=nid, name="count", dimid=ncount), &
+    '[ERR] Error in nf90_inq_dimid obtaining temp counts in ISCCP Skin Temp')
 
-     ios = nf90_inquire_dimension(nid,ncount, len=temp_tab_size)
-     call LIS_verify(ios,'Error in nf90_inquire_dimension in ISCCP Skin Temp')
+  call LIS_verify(nf90_inquire_dimension(ncid=nid, dimid=ncount, &
+    len=temp_tab_size),'[ERR] Error in nf90_inquire_dimension in ISCCP Skin Temp')
 
-     allocate(tmptab(temp_tab_size))
-     
-     ios = nf90_inq_varid(nid, 'Count to temperature conversion table', tmptabid)
-     call LIS_VERIFY(ios, 'Error nf90_inq_varid: ISCCP temp conversion table')
+  allocate(tmp_tab(temp_tab_size))
+  
+  call LIS_VERIFY(nf90_inq_varid(ncid=nid, &
+    name='Count to temperature conversion table', varid=tmptabid), &
+    '[ERR] Error nf90_inq_varid: ISCCP temp conversion table')
 
-     ios = nf90_get_var(nid, tmptabid, tmptab)
-     call LIS_VERIFY(ios, 'Error nf90_get_var: ISCCP Surface Skin Temperature')
+  call LIS_VERIFY(nf90_get_var(ncid=nid, varid=tmptabid, values=tmp_tab), &
+    '[ERR] Error nf90_get_var: ISCCP Surface Skin Temperature')
 
 
-#if 0 
+
 ! =============================================================================
 ! JBE the following section added
 !   1 - to convert the byte values to temperature values
@@ -530,7 +532,7 @@ subroutine read_ISCCP_HXG_data(n, k, fname, tskin_obs_ip)
      do c=1,ISCCP_HXG_struc(n)%nc
         if(clouds(c,r) .eq. 1 ) then !JBE filter out value that are cloudy
            bit_temp=ts_temp(c,r)
-           assigned_temp=tmptab(bit_temp)
+           assigned_temp=tmp_tab(bit_temp)
            temp_array(c,r) = assigned_temp
         endif
      enddo
@@ -553,7 +555,7 @@ subroutine read_ISCCP_HXG_data(n, k, fname, tskin_obs_ip)
 
 ! JBE end added section
 ! =============================================================================
-#endif
+
 
 !--------------------------------------------------------------------------
 ! Interpolate to the LIS running domain
@@ -566,7 +568,7 @@ subroutine read_ISCCP_HXG_data(n, k, fname, tskin_obs_ip)
        ISCCP_HXG_struc(n)%n11, LIS_rc%udef, ios)
 
   deallocate(clouds)
-  deallocate(tmptab)
+  deallocate(tmp_tab)
   deallocate(dims)
   deallocate(temp_array)
   deallocate(ts_temp)
@@ -579,11 +581,11 @@ end subroutine read_ISCCP_HXG_data
 
 
 !BOP
-! !ROUTINE: create_ISCCP_filename
-! \label{create_ISCCP_filename}
+! !ROUTINE: create_ISCCP_HXG_filename
+! \label{create_ISCCP_HXG_filename}
 ! 
 ! !INTERFACE: 
-subroutine create_ISCCP_filename(ndir, yr, mo,da, hr, filename)
+subroutine create_ISCCP_HXG_filename(ndir, yr, mo,da, hr, filename)
 ! !USES:   
 
   implicit none
@@ -620,9 +622,9 @@ subroutine create_ISCCP_filename(ndir, yr, mo,da, hr, filename)
           '/ISCCP.HXG.v01r00.GLOBAL.'//trim(fyr)//'.'//trim(fmo)//&
           '.'//trim(fda)//'.'//trim(fhr)//'00.GPC.10KM.EQ0.10.nc'
 
-  endif
+  
 
-end subroutine create_ISCCP_filename
+end subroutine create_ISCCP_HXG_filename
 
 
 

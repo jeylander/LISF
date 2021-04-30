@@ -64,7 +64,7 @@ subroutine NoahMP401_setsoiltemp(n, LSM_State)
   integer                :: t, j,i, gid, m, t_unpert
   integer                :: status
   real                   :: delta(4)
-  real                   :: delta1,delta2,delta3,delta4
+  real                   :: delta1,delta2,delta3,delta4,deltats
   real                   :: tmpval
   logical                :: bounds_violation
   integer                :: nIter

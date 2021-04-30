@@ -357,7 +357,8 @@ contains
           ISCCP_HXG_struc(n)%nc = 3600
           ISCCP_HXG_struc(n)%nr = 1800
        elseif(ISCCP_HXG_struc(n)%data_designation.ne."HXG") then
-          write
+          write (LIS_logunit,*) &
+            '[ERROR] DATASET NOT SUPPORTED!!'
        endif
 
        allocate(ISCCP_HXG_struc(n)%STO_obs(LIS_rc%obs_lnc(k),LIS_rc%obs_lnr(k)))
