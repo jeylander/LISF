@@ -18,6 +18,7 @@ module LDT_DAobservationsMod
 !
 ! !REVISION HISTORY: 
 !  02 Oct 2008    Sujay Kumar  Initial Specification
+!  30 Jan 2022    John Eylander  Added LST variables
 ! 
 ! !USES:       
 
@@ -69,6 +70,7 @@ contains
        call default_init_obsEntry(LDT_DAobsData(i)%tws_obs, "TWS")
        call default_init_obsEntry(LDT_DAobsData(i)%vod_obs, "VOD")
        call default_init_obsEntry(LDT_DAobsData(i)%lai_obs, "LAI")
+       call default_init_obsEntry(LDT_DAobsData(i)%lst_obs, "LST")
     enddo
 
     call daobservationsetup(trim(LDT_rc%obs_src)//char(0))
