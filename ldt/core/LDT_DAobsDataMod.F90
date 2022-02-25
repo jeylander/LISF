@@ -21,6 +21,7 @@ module LDT_DAobsDataMod
 !   
 !  !REVISION HISTORY: 
 !  2 Oct 2008    Sujay Kumar  Initial Specification
+!  30 Jan 2022  John Eylander  added  LDT_DA_MOC_SOILTEMP
 ! !USES: 
 
   PRIVATE 
@@ -42,28 +43,33 @@ module LDT_DAobsDataMod
   public :: LDT_DAobsDataPtr
   public :: LDT_DA_MOC_SWE       
   public :: LDT_DA_MOC_SNOWDEPTH
-  public :: LDT_DA_MOC_SOILMOIST 
+  public :: LDT_DA_MOC_SOILMOIST
   public :: LDT_DA_MOC_TWS
   public :: LDT_DA_MOC_VOD
   public :: LDT_DA_MOC_LAI
   public :: LDT_DA_MOC_COUNT
+  public :: LDT_DA_MOC_SOILTEMP
 !  public :: LDT_MOC_GRIB_COUNT
 
-   ! ALMA ENERGY BALANCE COMPONENTS
+   ! CDF VARIABLES LIST -- of you want to add another variable to compute statistics for
+   ! in the CDF file, it needs to be added below, and the number of variables (LDT_DA_MOC_COUNT)
+   ! needs to be increased by 1.  
   integer, parameter :: LDT_DA_MOC_SWE        = 1
   integer, parameter :: LDT_DA_MOC_SNOWDEPTH  = 2
   integer, parameter :: LDT_DA_MOC_SOILMOIST  = 3
   integer, parameter :: LDT_DA_MOC_TWS        = 4
   integer, parameter :: LDT_DA_MOC_VOD        = 5
   integer, parameter :: LDT_DA_MOC_LAI        = 6
+  integer, parameter :: LDT_DA_MOC_SOILTEMP   = 7
    ! READ ABOVE NOTE ABOUT SPECIAL CASE INDICES
-  integer, parameter :: LDT_DA_MOC_COUNT      = 6
+  integer, parameter :: LDT_DA_MOC_COUNT      = 7   ! total number of CDF variables from list above
   ! Add the special cases.  LDT_MOC_GRIB_COUNT should be used only in
    ! LDT_gribMod.F90.
 !  integer, parameter :: LDT_MOC_GRIB_COUNT = 100
   
 !  real, parameter :: LDT_MOC_MAX_NUM =  999999.0
 !  real, parameter :: LDT_MOC_MIN_NUM = -999999.0
+  
 
 !EOP
   type, public :: LDT_DAmetadataEntry
@@ -98,6 +104,7 @@ module LDT_DAobsDataMod
      type(LDT_DAmetadataEntry) :: soilmoist
      type(LDT_DAmetadataEntry) :: vod
      type(LDT_DAmetadataEntry) :: lai
+     type(LDT_DAmetadataEntry) :: lst
 
   end type output_meta
 
@@ -112,6 +119,7 @@ module LDT_DAobsDataMod
      type(LDT_DAmetadataEntry) :: tws_obs
      type(LDT_DAmetadataEntry) :: vod_obs
      type(LDT_DAmetadataEntry) :: lai_obs
+     type(LDT_DAmetadataEntry) :: lst_obs
   end type obs_list_dec
 
   type, public :: obsdep
@@ -199,6 +207,8 @@ contains
          LDT_DAobsData(i)%vod_obs,1,nsize,(/"-"/))
     call register_obsDataEntry(i,LDT_DA_MOC_LAI ,&
          LDT_DAobsData(i)%lai_obs,1,nsize,(/"-"/))
+    call register_obsDataEntry(i,LDT_DA_MOC_SOILTEMP ,&
+         LDT_DAobsData(i)%lst_obs,1,nsize,(/"K"/))
   end subroutine LDT_DAobsEntryInit
 
 !BOP
