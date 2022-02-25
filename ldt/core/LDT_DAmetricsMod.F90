@@ -18,6 +18,7 @@ module LDT_DAmetricsMod
 !
 ! !REVISION HISTORY:
 !  02 Oct 2008: Sujay Kumar; Initial version
+!  30 Jan 2022: John Eylander; added MOC_SOILTEMP variable
 !
   use ESMF
   use LDT_DAmetricsDataMod
@@ -96,6 +97,9 @@ contains
          LDT_DAobsData(n)%vod_obs,LDT_DAmetrics%vod)
     call registerMetricsEntry(LDT_DA_MOC_LAI,nsize,&
          LDT_DAobsData(n)%lai_obs,LDT_DAmetrics%lai)
+    !!! Added by John Eylander
+    call registerMetricsEntry(LDT_DA_MOC_SOILTEMP,nsize,&
+         LDT_DAobsData(n)%lst_obs,LDT_DAmetrics%soiltemp)
 !------------------------------------------------------------------------
 ! the generation of the obsgrid only doesn't require a pass through the
 ! data
