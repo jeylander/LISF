@@ -62,7 +62,7 @@ subroutine readISCCPHXGSTObs(n)
    character*4       :: yyyy
    character*2       :: mm, dd, hh
    character*100     :: ISCCP_HXG_filename(10)
-   character*100     :: temp_filename
+   
    real              :: LST_obs(LDT_rc%lnc(n)*LDT_rc%lnr(n))
    
    character(len=3) :: CRID
