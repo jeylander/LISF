@@ -66,6 +66,7 @@ subroutine readISCCPHXGSTObs(n)
    real              :: LST_obs(LDT_rc%lnc(n)*LDT_rc%lnr(n))
    
    character(len=3) :: CRID
+
 !-----------------------------------------------------------------------
 ! Read in the ISCCP observations.  Main routine below.
 !-----------------------------------------------------------------------
@@ -154,8 +155,8 @@ subroutine read_ISCCP_HXG_data(n, fname, tskin_obs_ip)
 !
   integer                       :: n
   character (len=*)             :: fname
-  real                          :: tskin_obs_ip(LDT_rc%lnc(n)*LDT_rc%lnr(n))
-  logical                       :: tskin_array_logical_ip(LDT_rc%lnc(n)*LDT_rc%lnr(n))
+  real, intent(inout)           :: tskin_obs_ip(LDT_rc%lnc(n)*LDT_rc%lnr(n))
+  logical*1                     :: tskin_array_logical_ip(LDT_rc%lnc(n)*LDT_rc%lnr(n))
 
 
 ! !OUTPUT PARAMETERS:
@@ -205,10 +206,10 @@ subroutine read_ISCCP_HXG_data(n, fname, tskin_obs_ip)
   integer*2, allocatable            :: ts_temp(:,:)
   real*8, allocatable               :: tmp_lat(:)
   real*8, allocatable               :: tmp_lon(:)
-  integer*2, allocatable               :: clouds(:,:)
-  integer, allocatable               :: temp_array(:,:)
-  integer, allocatable               :: new_temp_array(:,:)
-  integer, allocatable               :: tmp_tab(:)
+  integer*2, allocatable            :: clouds(:,:)
+  integer, allocatable              :: temp_array(:,:)
+  integer, allocatable              :: new_temp_array(:,:)
+  integer, allocatable              :: tmp_tab(:)
 
   logical*1    :: tskin_array_logical(ISCCPHXGstobs(n)%nc*ISCCPHXGstobs(n)%nr)
   real         :: tskin_data(ISCCPHXGstobs(n)%nc*ISCCPHXGstobs(n)%nr)
@@ -309,7 +310,12 @@ subroutine read_ISCCP_HXG_data(n, fname, tskin_obs_ip)
 !   1 - to convert the byte values to temperature values
 !   2 - to filter the cloudy grid points
 
-     
+  
+  write(LDT_logunit,*) '[ALERT] INSIDE ISCCP reader: ', &
+    'temp_table= ', tmp_tab, LDT_rc%lnc(n), LDT_rc%lnr(n), ISCCPHXGstobs(n)%nc, &
+         ISCCPHXGstobs(n)%nr
+
+
   temp_array(:,:) = LDT_rc%udef
   do r=1,ISCCPHXGstobs(n)%nr
      do c=1,ISCCPHXGstobs(n)%nc
@@ -349,6 +355,7 @@ subroutine read_ISCCP_HXG_data(n, fname, tskin_obs_ip)
 ! JBE end added section
 ! =============================================================================
 
+
 !--------------------------------------------------------------------------
 ! Interpolate to the LDT running domain
 !--------------------------------------------------------------------------
@@ -366,6 +373,7 @@ subroutine read_ISCCP_HXG_data(n, fname, tskin_obs_ip)
   deallocate(ts_temp)
   deallocate(tmp_lat)
   deallocate(tmp_lon)
+  deallocate(new_temp_array)
 
 #endif
 
